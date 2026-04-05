@@ -1,4 +1,4 @@
-package org.paul;
+package org.paul.formatter;
 
 import java.util.List;
 

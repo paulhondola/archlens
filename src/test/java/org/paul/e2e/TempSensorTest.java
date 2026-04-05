@@ -1,6 +1,9 @@
-package org.paul;
+package org.paul.e2e;
 
 import org.junit.jupiter.api.Test;
+import org.paul.Main;
+import org.paul.formatter.PlantUmlFormatter;
+import org.paul.formatter.YumlFormatter;
 
 import java.io.IOException;
 import java.nio.file.Files;

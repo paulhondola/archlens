@@ -1,5 +1,7 @@
 package org.paul;
 
+import org.paul.formatter.UmlFormatter;
+
 public class Main {
     static void main() {
 
