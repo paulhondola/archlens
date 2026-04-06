@@ -1,0 +1,97 @@
+@startuml
+
+class DecompileConfig{
+  -ignorePatterns:List of String
+  -fullyQualified:boolean
+  -showMethods:boolean
+  -showAttributes:boolean
+  defaults()
+  equals()
+  fullyQualified()
+  hashCode()
+  ignorePatterns()
+  showAttributes()
+  showMethods()
+  toString()
+}
+
+class ClassInspector{
+  accessModChar()
+  classDisplayName()
+  collectTargets()
+  getTypeName()
+  inspect()
+  typeArgDisplayName()
+}
+
+class YumlFormatter{
+  -mode:Mode
+  format()
+}
+
+interface UmlFormatter{
+  format()
+}
+
+class PlantUmlFormatter{
+  format()
+}
+
+class JarLoader{
+  load()
+}
+
+class ClassInfo{
+  -clazz:Class of ?
+  -fields:List of FieldInfo
+  -methods:List of String
+  -relationships:List of Relationship
+  clazz()
+  equals()
+  fields()
+  hashCode()
+  methods()
+  relationships()
+  toString()
+}
+
+interface Relationship{
+}
+
+class FieldInfo{
+  -name:String
+  -typeName:String
+  -accessModifier:char
+  accessModifier()
+  equals()
+  hashCode()
+  name()
+  toString()
+  typeName()
+}
+
+class Main{
+  -yumlMode:Mode
+  -ignorePatterns:List of String
+  -jarPath:String
+  -format:Format
+  -outputFile:Path
+  call()
+  decompile()
+  main()
+}
+
+class ClassFilter{
+  filter()
+  isIgnored()
+}
+
+UmlFormatter <|--- YumlFormatter
+
+UmlFormatter <|--- PlantUmlFormatter
+
+ClassInfo ---> FieldInfo
+
+ClassInfo ---> Relationship
+
+@enduml
