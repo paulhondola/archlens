@@ -14,8 +14,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -27,13 +31,27 @@ import java.util.stream.Collectors;
 )
 public class Main implements Callable<Integer> {
 
+    /**
+     * Formatter registry built once from {@link ServiceLoader}.
+     * Keys are lowercase formatter names (e.g. {@code "plantuml"}, {@code "yuml"}).
+     * To register a new formatter: implement {@link UmlFormatter} and add its fully-qualified
+     * class name to {@code META-INF/services/org.paul.formatter.UmlFormatter}.
+     */
+    static final Map<String, UmlFormatter> FORMATTERS;
+
+    static {
+        Map<String, UmlFormatter> map = new LinkedHashMap<>();
+        ServiceLoader.load(UmlFormatter.class).forEach(f -> map.put(f.name(), f));
+        FORMATTERS = Collections.unmodifiableMap(map);
+    }
+
     @Option(names = "--ignore", paramLabel = "PATTERN", split = ",",
             description = "Class name patterns to exclude, comma-separated or repeated (e.g. 'java.lang.*').")
     private List<String> ignorePatterns = List.of();
     @Parameters(index = "0", paramLabel = "JAR", description = "Path to the JAR file to analyse.")
     private String jarPath;
     @Option(names = "--format", required = true,
-            description = "Output format: ${COMPLETION-CANDIDATES}.")
+            description = "Output format. Available: plantuml, yuml (case-insensitive).")
     private String format;
     @Option(names = "--output", paramLabel = "FILE",
             description = "Write output to FILE instead of stdout.")
@@ -63,17 +81,10 @@ public class Main implements Callable<Integer> {
     @Override
     public Integer call()
      {
-        // Open formatter registry: --format <Name> resolves to org.paul.formatter.<Name>Formatter.
-        // To add a new formatter, create a class implementing UmlFormatter in that package.
-        // No changes to Main are required.
-        UmlFormatter formatter;
-        try {
-            String formatName = format.substring(0, 1).toUpperCase() + format.substring(1);
-            formatter = (UmlFormatter) Class.forName("org.paul.formatter." + formatName + "Formatter")
-                    .getDeclaredConstructor()
-                    .newInstance();
-        } catch (Exception e) {
-            throw new IllegalStateException("Unknown formatter: " + format, e);
+        UmlFormatter formatter = FORMATTERS.get(format.toLowerCase());
+        if (formatter == null) {
+            throw new IllegalArgumentException(
+                "Unknown formatter '" + format + "'. Available: " + FORMATTERS.keySet());
         }
         DecompileConfig config = new DecompileConfig(ignorePatterns, false, true, true);
         String result = decompile(jarPath, formatter, config);

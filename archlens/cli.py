@@ -14,7 +14,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--format",
         required=True,
-        help="Output format.",
+        help="Output format, case-insensitive (e.g. plantuml, yuml).",
     )
     p.add_argument(
         "--ignore",

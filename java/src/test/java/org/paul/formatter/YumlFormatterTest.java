@@ -33,8 +33,8 @@ class YumlFormatterTest {
     }
 
     @Nested
-    @DisplayName("")
-    class YumlFormatterTest {
+    @DisplayName("CLASSES mode")
+    class ClassesMode {
 
         private final YumlFormatter yuml = new YumlFormatter();
 
