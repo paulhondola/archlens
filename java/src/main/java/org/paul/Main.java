@@ -2,9 +2,7 @@ package org.paul;
 
 import org.paul.config.DecompileConfig;
 import org.paul.filter.ClassFilter;
-import org.paul.formatter.PlantUmlFormatter;
 import org.paul.formatter.UmlFormatter;
-import org.paul.formatter.YumlFormatter;
 import org.paul.introspection.ClassInspector;
 import org.paul.loader.JarLoader;
 import picocli.CommandLine;
@@ -29,9 +27,6 @@ import java.util.stream.Collectors;
 )
 public class Main implements Callable<Integer> {
 
-    @Option(names = "--yuml-mode", paramLabel = "MODE",
-            description = "yUML rendering mode (only with --format yuml): ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}.")
-    private YumlFormatter.Mode yumlMode = YumlFormatter.Mode.SIMPLE;
     @Option(names = "--ignore", paramLabel = "PATTERN", split = ",",
             description = "Class name patterns to exclude, comma-separated or repeated (e.g. 'java.lang.*').")
     private List<String> ignorePatterns = List.of();
@@ -39,7 +34,7 @@ public class Main implements Callable<Integer> {
     private String jarPath;
     @Option(names = "--format", required = true,
             description = "Output format: ${COMPLETION-CANDIDATES}.")
-    private Format format;
+    private String format;
     @Option(names = "--output", paramLabel = "FILE",
             description = "Write output to FILE instead of stdout.")
     private Path outputFile;
@@ -66,12 +61,20 @@ public class Main implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() {
-        UmlFormatter formatter = switch (format) {
-            case yuml -> new YumlFormatter(yumlMode);
-            case plantuml -> new PlantUmlFormatter();
-        };
-
+    public Integer call()
+     {
+        // Open formatter registry: --format <Name> resolves to org.paul.formatter.<Name>Formatter.
+        // To add a new formatter, create a class implementing UmlFormatter in that package.
+        // No changes to Main are required.
+        UmlFormatter formatter;
+        try {
+            String formatName = format.substring(0, 1).toUpperCase() + format.substring(1);
+            formatter = (UmlFormatter) Class.forName("org.paul.formatter." + formatName + "Formatter")
+                    .getDeclaredConstructor()
+                    .newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException("Unknown formatter: " + format, e);
+        }
         DecompileConfig config = new DecompileConfig(ignorePatterns, false, true, true);
         String result = decompile(jarPath, formatter, config);
 
@@ -87,6 +90,4 @@ public class Main implements Callable<Integer> {
 
         return 0;
     }
-
-    enum Format {yuml, plantuml}
 }
